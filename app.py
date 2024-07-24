@@ -14,7 +14,7 @@ class MyApp:
         self.documents = []
         self.embeddings = None
         self.index = None
-        self.load_pdf("THEDIA1.pdf")
+        self.load_pdf("BOOKS.pdf")
         self.build_vector_db()
 
     def load_pdf(self, file_path: str) -> None:
@@ -45,15 +45,16 @@ class MyApp:
 
 app = MyApp()
 
+
 def respond(
-    message: str,
-    history: List[Tuple[str, str]],
-    system_message: str,
-    max_tokens: int,
-    temperature: float,
-    top_p: float,
+    message,
+    history: list[tuple[str, str]],
+    system_message,
+    max_tokens,
+    temperature,
+    top_p,
 ):
-    system_message = "You are a knowledgeable DBT coach. You always talk about one options at at a time. you add greetings and you ask questions like real counsellor. Remember you are helpful and a good listener. You are concise and never ask multiple questions, or give long response. You response like a human counsellor accurately and correctly. consider the users as your client. and practice verbal cues only where needed. Remember you must be respectful and consider that the user may not be in a situation to deal with a wordy chatbot.  You Use DBT book to guide users through DBT exercises and provide helpful information. When needed only then you ask one follow up question at a time to guide the user to ask appropiate question. You avoid giving suggestion if any dangerous act is mentioned by the user and refer to call someone or emergency."
+    system_message = "You are here to help me find my next great read. ask me about the genres, authors, or types of stories I enjoy, and You'll recommend some books for me. Let's get started!"
     messages = [{"role": "system", "content": system_message}]
 
     for val in history:
@@ -64,44 +65,48 @@ def respond(
 
     messages.append({"role": "user", "content": message})
 
-    # RAG - Retrieve relevant documents
-    retrieved_docs = app.search_documents(message)
-    context = "\n".join(retrieved_docs)
-    messages.append({"role": "system", "content": "Relevant documents: " + context})
-
     response = ""
+
     for message in client.chat_completion(
         messages,
-        max_tokens=100,
+        max_tokens=max_tokens,
         stream=True,
-        temperature=0.98,
-        top_p=0.7,
+        temperature=temperature,
+        top_p=top_p,
     ):
         token = message.choices[0].delta.content
+
         response += token
         yield response
+
+
 
 demo = gr.Blocks()
 
 with demo:
     gr.Markdown(
-        "‼️Disclaimer: This chatbot is based on a DBT exercise book that is publicly available. and just to test RAG implementation.‼️"
+        "‼️Disclaimer: This document is utilized exclusively for implementing a Retrieval-Augmented Generation (RAG) chatbot.‼️"
     )
     
     chatbot = gr.ChatInterface(
         respond,
-        examples=[
-            ["I feel overwhelmed with work."],
-            ["Can you guide me through a quick meditation?"],
-            ["How do I stop worrying about things I can't control?"],
-            ["What are some DBT skills for managing anxiety?"],
-            ["Can you explain mindfulness in DBT?"],
-            ["I am interested in DBT excercises"],
-            ["I feel restless. Please help me."],
-            ["I have destructive thoughts coming to my mind repetatively."]
+       examples=[
+            ["I love mystery novels with a strong female lead."],
+            ["Can you recommend some science fiction books?"],
+            ["I'm looking for a good historical fiction novel."]
+
         ],
-        title='Dialectical Behaviour Therapy Assistant👩‍⚕️🧘‍♀️'
+        title='📚 Personalized Book Recommendation Bot 📚',
+    description='''<h2>Welcome to the Personalized Book Recommendation Bot!</h2>
+                   <p>Tell me about your reading preferences, and I will suggest some books that you might enjoy.</p>
+                   <p><strong>Examples:</strong></p>
+                   <ul>
+                       <li>I love mystery novels with a strong female lead.</li>
+                       <li>Can you recommend some science fiction books?</li>
+                       <li>I'm looking for a good historical fiction novel.</li>
+                   </ul>''',
     )
+
 
 if __name__ == "__main__":
     demo.launch()
